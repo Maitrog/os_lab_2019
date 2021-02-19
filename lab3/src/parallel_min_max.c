@@ -15,6 +15,18 @@
 #include "find_min_max.h"
 #include "utils.h"
 
+int mpow(int a, int b)
+{
+    if(b==0)
+        return 1;
+    int c=a;
+    if(b%2==0)
+        c=mpow(a*a,b/2);
+    else
+        c=c*mpow(a,b-1);
+    return c;
+}
+
 int main(int argc, char **argv) {
   int seed = -1;
   int array_size = -1;
@@ -57,9 +69,19 @@ int main(int argc, char **argv) {
             break;
           case 2:
             pnum = atoi(optarg);
-            if (pnum <= 0)
+            if (pnum < 0)
             {
                 printf("pnum is a positive number\n");
+                return 1;
+            }
+            // if(mpow(2,pnum) > array_size)
+            // {
+            //     printf("wrong pnum\n");
+            //     return 1;
+            // }
+            if(pnum > array_size/2)
+            {
+                printf("wrong pnum");
                 return 1;
             }
             break;
@@ -101,33 +123,40 @@ int main(int argc, char **argv) {
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
 
+    int fd[2];
+    if(pipe(fd) == -1)
+        return 1;
+
+    struct MinMax my;
+
   for (int i = 0; i < pnum; i++) {
     pid_t child_pid = fork();
     if (child_pid >= 0) {
       // successful fork
       active_child_processes += 1;
       if (child_pid == 0) {
-        // child process
-
-        // parallel somehow
+        my = GetMinMax(array, i, (i+1)*(array_size/pnum));
 
         if (with_files) {
           // use files here
         } else {
           // use pipe here
+          if(write(fd[1], &my, sizeof(struct MinMax)) == -1)
+            return 1;
         }
         return 0;
       }
+      }
 
-    } else {
+     else {
       printf("Fork failed!\n");
       return 1;
     }
   }
 
   while (active_child_processes > 0) {
-    // your code here
-
+    close(fd[1]);
+    wait(0);
     active_child_processes -= 1;
   }
 
@@ -143,10 +172,12 @@ int main(int argc, char **argv) {
       // read from files
     } else {
       // read from pipes
+      if(read(fd[0], &my, sizeof(struct MinMax))==-1)
+      return 1;
     }
 
-    if (min < min_max.min) min_max.min = min;
-    if (max > min_max.max) min_max.max = max;
+    if (my.min < min_max.min) min_max.min = my.min;
+    if (my.max > min_max.max) min_max.max = my.max;
   }
 
   struct timeval finish_time;
@@ -154,6 +185,10 @@ int main(int argc, char **argv) {
 
   double elapsed_time = (finish_time.tv_sec - start_time.tv_sec) * 1000.0;
   elapsed_time += (finish_time.tv_usec - start_time.tv_usec) / 1000.0;
+
+//   for(int i = 0; i < array_size; i++)
+//     printf("%d\n", array[i]);
+//     printf("\n");
 
   free(array);
 
