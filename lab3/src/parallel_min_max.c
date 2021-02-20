@@ -15,18 +15,6 @@
 #include "find_min_max.h"
 #include "utils.h"
 
-int mpow(int a, int b)
-{
-    if(b==0)
-        return 1;
-    int c=a;
-    if(b%2==0)
-        c=mpow(a*a,b/2);
-    else
-        c=c*mpow(a,b-1);
-    return c;
-}
-
 int main(int argc, char **argv) {
   int seed = -1;
   int array_size = -1;
@@ -74,11 +62,6 @@ int main(int argc, char **argv) {
                 printf("pnum is a positive number\n");
                 return 1;
             }
-            // if(mpow(2,pnum) > array_size)
-            // {
-            //     printf("wrong pnum\n");
-            //     return 1;
-            // }
             if(pnum > array_size/2)
             {
                 printf("wrong pnum");
@@ -139,6 +122,17 @@ int main(int argc, char **argv) {
 
         if (with_files) {
           // use files here
+          FILE *fp;
+          fp = fopen("MinMax.txt","a");
+          if(fp==0)
+          {
+              printf("Culdn't open file\n");
+              return 1;
+          }
+          else
+          {
+              fwrite(&my, sizeof(struct MinMax), 1, fp);
+          }
         } else {
           // use pipe here
           if(write(fd[1], &my, sizeof(struct MinMax)) == -1)
@@ -170,6 +164,17 @@ int main(int argc, char **argv) {
 
     if (with_files) {
       // read from files
+      FILE *fp;
+      fp = fopen("MinMax.txt", "rb");
+      if(fp==0)
+      {
+          printf("Culdn't open file\n");
+          return 1;
+      }
+      else
+      {
+          fread(&my, sizeof(struct MinMax), 1, fp);
+      }
     } else {
       // read from pipes
       if(read(fd[0], &my, sizeof(struct MinMax))==-1)
