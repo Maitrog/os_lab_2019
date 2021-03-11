@@ -18,12 +18,11 @@ int main()
     if(child_pid == 0)
     {
         printf("Child process\n");
-        execl("sequential_min_max", "", "1", "10", NULL);
         return 0;
     }
     else
     {
-        return 0;
+        execl("sequential_min_max", "", "1", "10", NULL);
     }
     return 0;
 }
